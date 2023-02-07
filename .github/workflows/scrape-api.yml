@@ -23,17 +23,12 @@ jobs:
     - name: Scrape website
       run: python scrape.py
 
-    - name: Open Pull Request
-      uses: peter-evans/create-pull-request@v4
+    - uses: stefanzweifel/git-auto-commit-action@v4
       with:
-        commit-message: >
-          Regenerate bot API docs.
-        title: >
-          Update bot API docs based on the latest changes
-        body: >
-          This is an automated PR. Please check the diff, and the action logs, to check for any funky behaviour.
-        branch: automated/bot-api-update
-        reviewers: PaulSonOfLars
-        assignees: PaulSonOfLars
-        labels: automated
-        delete-branch: true
+        # Optional. Commit message for the created commit.
+        # Defaults to "Apply automatic changes"
+        commit_message: Regenerate bot API docs.
+        # Optional commit user and author settings
+        commit_user_name: Yasir Aris M # defaults to "github-actions[bot]"
+        commit_user_email: yasiramunandar@gmail.com # defaults to "41898282+github-actions[bot]@users.noreply.github.com"
+        commit_author: Yasir <yasiramunandar@gmail.com> # defaults to author of the commit that triggered the run
