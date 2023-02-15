@@ -2,6 +2,7 @@ on:
   workflow_dispatch: {} # Allow manually kicking off builds
   schedule:
     - cron:  '0 12 * * *' # Every day at 12:00 (noon). Ref https://crontab.guru/examples.html
+    
 name: Scrape telegram bot API
 jobs:
   build:
@@ -24,8 +25,20 @@ jobs:
       run: python scrape.py
 
     - name: GIT Commit
-      run: |
-        git config --global user.name "yasir aris m"
-        git config --global user.email "yasiramunandar@gmail.com"
-        git commit -a -m "Update docs json"
-        git push
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        # Optional. Commit message for the created commit.
+        # Defaults to "Apply automatic changes"
+        commit_message: Updated Bot Api Docs.
+
+        # Optional commit user and author settings
+        commit_user_name: Yasir Aris M # defaults to "github-actions[bot]"
+        commit_user_email: yasiramunandar@gmail.com # defaults to "41898282+github-actions[bot]@users.noreply.github.com"
+        commit_author: Yasir Aris M <yasiramunandar@gmail.com> # defaults to author of the commit that triggered the run
+
+        # Optional. Options used by `git-push`.
+        # See https://git-scm.com/docs/git-push#_options
+        push_options: '--force'
+
+        # Optional. Disable dirty check and always try to create a commit and push
+        skip_dirty_check: true
