@@ -8,9 +8,7 @@ from bs4.element import Tag
 
 TG_CORE_TYPES = ["String", "Boolean", "Integer", "Float"]
 ROOT_URL = "https://core.telegram.org"
-TO_SCRAPE = {
-    "api": ROOT_URL + "/bots/api",
-}
+TO_SCRAPE = {"api": f"{ROOT_URL}/bots/api"}
 
 METHODS = "methods"
 TYPES = "types"
@@ -38,7 +36,7 @@ def retrieve_info(url: str) -> dict:
     }
 
     for x in list(dev_rules.children):  # type: Tag
-        if x.name == "h3" or x.name == "hr":
+        if x.name in ["h3", "hr"]:
             # New category; clear name and type.
             curr_name = ""
             curr_type = ""
@@ -138,26 +136,22 @@ def get_method_return_type(curr_name: str, curr_type: str, description_items: li
 
 
 def get_type_and_name(t: Tag, anchor: Tag, items: dict, url: str):
-    if t.text[0].isupper():
-        curr_type = TYPES
-    else:
-        curr_type = METHODS
+    curr_type = TYPES if t.text[0].isupper() else METHODS
     curr_name = t.get_text()
     items[curr_type][curr_name] = {"name": curr_name}
 
-    href = anchor.get("href")
-    if href:
+    if href := anchor.get("href"):
         items[curr_type][curr_name]["href"] = url + href
 
     return curr_name, curr_type
 
 
 def extract_return_type(curr_type: str, curr_name: str, ret_str: str, items: dict):
-    array_match = re.search(r"(?:array of )+(\w*)", ret_str, re.IGNORECASE)
-    if array_match:
+    if array_match := re.search(
+        r"(?:array of )+(\w*)", ret_str, re.IGNORECASE
+    ):
         ret = clean_tg_type(array_match.group(1))
         rets = [f"Array of {r}" for r in ret]
-        items[curr_type][curr_name]["returns"] = rets
     else:
         words = ret_str.split()
         rets = [
@@ -165,7 +159,7 @@ def extract_return_type(curr_type: str, curr_name: str, ret_str: str, items: dic
             for r in clean_tg_type(ret.translate(str.maketrans("", "", string.punctuation)))
             if ret[0].isupper()
         ]
-        items[curr_type][curr_name]["returns"] = rets
+    items[curr_type][curr_name]["returns"] = rets
 
 
 def clean_tg_field_description(t: Tag, url: str) -> str:
@@ -195,7 +189,7 @@ def clean_tg_description(t: Tag, url: str) -> list[str]:
         elif link.startswith("/"):
             link = ROOT_URL + link
 
-        anchor_text = anchor_text.replace(" »", ": " + link)
+        anchor_text = anchor_text.replace(" »", f": {link}")
         a.replace_with(anchor_text)
 
     text = t.get_text()
@@ -229,7 +223,7 @@ def get_proper_type(t: str) -> str:
     elif t == "Int":
         return "Integer"
 
-    elif t == "True" or t == "Bool":
+    elif t in {"True", "Bool"}:
         return "Boolean"
 
     return t
@@ -264,8 +258,11 @@ def verify_type_parameters(items: dict) -> bool:
             description = "".join(values.get("description", [])).lower()
             # Some types are abstract and have no information or subtypes - this is mentioned in their description.
             # Otherwise, check if they're manually approved.
-            if not subtypes and \
-                    not ("currently holds no information" in description or type_name in APPROVED_NO_SUBTYPES):
+            if (
+                not subtypes
+                and "currently holds no information" not in description
+                and type_name not in APPROVED_NO_SUBTYPES
+            ):
                 print("TYPE", type_name, "has no fields or subtypes, and is not approved")
                 issue_found = True
                 continue
